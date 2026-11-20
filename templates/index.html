@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Sentiment Analysis | ML Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <span class="logo-icon">📊</span>
+        <div class="logo-text">
+          <span class="logo-title">SentimentLab</span>
+          <span class="logo-subtitle">TF-IDF &bull; Scikit-Learn</span>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="#analyzer">Live Analyzer</a>
+        <a href="#performance">Model Benchmarks</a>
+        <a href="#visuals">Visualizations</a>
+        <a href="#methodology">Pipeline</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container hero-content">
+      <span class="badge">Machine Learning Lab Project</span>
+      <h1>Social Media Sentiment Analysis</h1>
+      <p class="hero-desc">
+        Classifying social media posts into <strong>Positive</strong>, <strong>Negative</strong>, or <strong>Neutral</strong> sentiment using TF-IDF n-grams and supervised classification algorithms.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-pill"><span class="stat-num">1,800</span> synthetic tweets</div>
+        <div class="stat-pill"><span class="stat-num">89.8%</span> peak accuracy</div>
+        <div class="stat-pill"><span class="stat-num">3</span> benchmarked models</div>
+        <div class="stat-pill"><span class="stat-num">18%</span> noise tolerance</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main class="container main-layout">
+    
+    <!-- Live Classifier Card -->
+    <section id="analyzer" class="card analyzer-card">
+      <div class="card-header">
+        <h2>⚡ Live Sentiment Classifier</h2>
+        <p>Test real-time predictions with our trained machine learning pipeline.</p>
+      </div>
+
+      <div class="analyzer-grid">
+        <!-- Input Column -->
+        <div class="input-pane">
+          <label for="post-input" class="label-title">Enter Social Media Post / Tweet:</label>
+          <textarea id="post-input" placeholder="e.g. Absolutely love this new update, fantastic work! #tech" rows="4"></textarea>
+          
+          <div class="preset-container">
+            <span class="preset-label">Quick samples:</span>
+            <div class="preset-buttons">
+              <button class="preset-btn" data-text="Absolutely love this new update, fantastic work! #tech">Positive sample</button>
+              <button class="preset-btn" data-text="Worst delivery ever, totally disappointed #angry @support">Negative sample</button>
+              <button class="preset-btn" data-text="The movie was okay, nothing special #review">Neutral sample</button>
+              <button class="preset-btn" data-text="this app is awesome but sometimes broken">Mixed review</button>
+            </div>
+          </div>
+
+          <div class="controls-row">
+            <div class="select-group">
+              <label for="model-select">Choose Model:</label>
+              <select id="model-select">
+                <option value="Logistic Regression" selected>Logistic Regression (Best - 89.8%)</option>
+                <option value="Naive Bayes">Multinomial Naive Bayes (89.8%)</option>
+                <option value="Linear SVM">Linear SVM (89.1%)</option>
+              </select>
+            </div>
+            <button id="predict-btn" class="btn primary-btn">
+              <span>Classify Sentiment</span>
+              <span class="btn-spinner" id="btn-spinner"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Output Result Column -->
+        <div class="output-pane">
+          <div id="result-placeholder" class="result-empty">
+            <div class="empty-icon">💡</div>
+            <h3>Ready for Analysis</h3>
+            <p>Type a post or choose a sample above, then click <strong>Classify Sentiment</strong> to inspect real-time predictions.</p>
+          </div>
+
+          <div id="result-container" class="result-box hidden">
+            <div class="result-top">
+              <span class="res-label">Detected Sentiment</span>
+              <div id="sentiment-badge" class="sentiment-badge badge-positive">
+                <span id="sentiment-icon">😊</span>
+                <span id="sentiment-text">Positive</span>
+              </div>
+            </div>
+
+            <div class="confidence-section">
+              <h4>Class Confidence Breakdown</h4>
+              <div class="prob-row">
+                <div class="prob-header">
+                  <span>Positive</span>
+                  <span id="prob-val-positive" class="prob-num">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="bar-positive" class="progress-bar bar-pos" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="prob-row">
+                <div class="prob-header">
+                  <span>Neutral</span>
+                  <span id="prob-val-neutral" class="prob-num">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="bar-neutral" class="progress-bar bar-neu" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="prob-row">
+                <div class="prob-header">
+                  <span>Negative</span>
+                  <span id="prob-val-negative" class="prob-num">0%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div id="bar-negative" class="progress-bar bar-neg" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pipeline-trace">
+              <div class="trace-item">
+                <span class="trace-title">Preprocessed Text:</span>
+                <code id="trace-clean">...</code>
+              </div>
+              <div class="trace-item">
+                <span class="trace-title">Detected TF-IDF Features:</span>
+                <div id="trace-features" class="feature-tags">
+                  <span class="tag">love</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Model Benchmarks Section -->
+    <section id="performance" class="card">
+      <div class="card-header">
+        <h2>📈 Model Performance & Benchmarks</h2>
+        <p>Evaluation results across 450 test posts with 5-fold cross validation and 18% injected label noise.</p>
+      </div>
+
+      <div class="table-responsive">
+        <table class="benchmark-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Test Accuracy</th>
+              <th>5-Fold CV</th>
+              <th>Precision (Avg)</th>
+              <th>Recall (Avg)</th>
+              <th>F1-Score</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight-row">
+              <td><strong>Logistic Regression</strong></td>
+              <td>0.8978 (89.8%)</td>
+              <td>0.8719 (87.2%)</td>
+              <td>0.90</td>
+              <td>0.90</td>
+              <td>0.90</td>
+              <td><span class="status-pill status-best">★ Best Model</span></td>
+            </tr>
+            <tr>
+              <td><strong>Multinomial Naive Bayes</strong></td>
+              <td>0.8978 (89.8%)</td>
+              <td>0.8719 (87.2%)</td>
+              <td>0.90</td>
+              <td>0.90</td>
+              <td>0.90</td>
+              <td><span class="status-pill">Tied Accuracy</span></td>
+            </tr>
+            <tr>
+              <td><strong>Linear SVM</strong></td>
+              <td>0.8911 (89.1%)</td>
+              <td>0.8585 (85.9%)</td>
+              <td>0.89</td>
+              <td>0.89</td>
+              <td>0.89</td>
+              <td><span class="status-pill">Competitive</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="top-words-grid">
+        <div class="word-card word-pos">
+          <h4>🌟 Top Positive Indicators</h4>
+          <p>best, brilliant, great, awesome, enjoyed, love, amazing</p>
+        </div>
+        <div class="word-card word-neu">
+          <h4>⚖️ Top Neutral Indicators</h4>
+          <p>typical, regular, standard, average, fine, usual, okay</p>
+        </div>
+        <div class="word-card word-neg">
+          <h4>⚠️ Top Negative Indicators</h4>
+          <p>horrible, awful, waste, useless, worst, hate, disappointed</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visualizations Section -->
+    <section id="visuals" class="card">
+      <div class="card-header">
+        <h2>📊 Project Visualisations</h2>
+        <p>Generated figures illustrating data balance, confusion matrix, and feature importances.</p>
+      </div>
+
+      <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="tab-fig1">Figure 1: Distribution & Accuracy</button>
+        <button class="tab-btn" data-tab="tab-fig2">Figure 2: Confusion Matrix</button>
+        <button class="tab-btn" data-tab="tab-fig3">Figure 3: Top Feature Weights</button>
+      </div>
+
+      <div class="tab-content">
+        <div id="tab-fig1" class="tab-pane active">
+          <div class="figure-wrapper">
+            <img src="/static/figures/fig1.png" alt="Balanced class distribution and model accuracy comparison">
+            <p class="fig-caption"><strong>Figure 1.</strong> Balanced class distribution (600 positive, 600 negative, 600 neutral) and test set accuracy comparison across all three models.</p>
+          </div>
+        </div>
+        <div id="tab-fig2" class="tab-pane">
+          <div class="figure-wrapper">
+            <img src="/static/figures/fig2.png" alt="Confusion matrix of Logistic Regression">
+            <p class="fig-caption"><strong>Figure 2.</strong> Confusion matrix of the best model (Logistic Regression) evaluated on the 450 unseen test posts.</p>
+          </div>
+        </div>
+        <div id="tab-fig3" class="tab-pane">
+          <div class="figure-wrapper">
+            <img src="/static/figures/fig3.png" alt="Words with the highest learned weights for each sentiment class">
+            <p class="fig-caption"><strong>Figure 3.</strong> Words with the highest learned coefficients for each sentiment class in Logistic Regression.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Methodology & Pipeline Overview -->
+    <section id="methodology" class="card">
+      <div class="card-header">
+        <h2>🛠️ 6-Step Machine Learning Pipeline</h2>
+        <p>Reproducible offline workflow built with Scikit-Learn and NumPy.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h3>Data Synthesis</h3>
+          <p>1,800 balanced tweets generated with templates, handles, links, and 18% label noise.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h3>Text Cleaning</h3>
+          <p>Removes URLs, mentions, digits, and punctuation while preserving hashtag content.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h3>TF-IDF Vectorization</h3>
+          <p>Extracts unigram & bigram features with min_df = 2, yielding 566 vocabulary terms.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <h3>Model Training</h3>
+          <p>Fits Logistic Regression, Multinomial Naive Bayes, and Linear SVM on a 75% stratified split.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">5</div>
+          <h3>Evaluation</h3>
+          <p>Assesses 5-fold CV score, precision, recall, F1, and calculates confusion matrices.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">6</div>
+          <h3>Inference</h3>
+          <p>Real-time classification of unseen user posts with probability confidence scores.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <p>Social Media Sentiment Analysis &bull; Machine Learning Lab Project</p>
+      <p class="author">Built by <strong>Pari Jain</strong></p>
+    </div>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
